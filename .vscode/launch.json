@@ -1,0 +1,20 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [{
+        "name": "Python: csv2qif.py",
+        "args": [
+            "/tmp/swed_statements/main",
+            "/tmp/out.qif",
+            "-c", "/home/kirill/workspace/finance_scripts/tests/private/config.json",
+            "-b", "swedbank",
+            "-a", "estonian"
+        ],
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/csv2qif.py",
+        "console": "integratedTerminal"
+    }]
+}

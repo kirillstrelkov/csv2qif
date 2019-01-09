@@ -1,0 +1,29 @@
+{
+    "banks": [{
+        "name": "Bank A",
+        "encoding": "utf8",
+        "delimiter": ";",
+        "description": ["details", "beneficiary_payer"],
+        "date": "date"
+    }, {
+        "name": "Bank B",
+        "encoding": "utf-8-sig",
+        "delimiter": ",",
+        "description": ["booking_text"],
+        "date": "transaction_date"
+    }],
+    "gnucash_aliases": {
+        "bank_a": "Assets:Current Assets:Bank A",
+        "bank_b": "Assets:Current Assets:Bank B"
+    },
+    "mappings": {
+        "Expenses:Bank Service Charge": [
+            "Norris and Sons",
+            "Lee"
+        ],
+        "Income:Salary": ["Smith PLC"],
+        "Expenses:Medical": ["medical", "hospital"],
+        "Expenses:Sport": ["sport"]
+
+    }
+}

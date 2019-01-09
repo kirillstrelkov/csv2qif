@@ -1,0 +1,4 @@
+pytest
+pytest-dotenv
+black
+flake8
