@@ -41,21 +41,27 @@ class BaseAccount(object):
         debit_credit = self.__get_transaction_value(transaction, "debit_credit")
         date = self.__get_transaction_value(transaction, "date")
 
+        #  TODO: move to config
         bad_descs = ["Opening balance", "Turnover", "closing balance"]
         for bad_desc in bad_descs:
-            if bad_desc in desc:
+            # TODO: imporove?
+            if bad_desc.lower() in desc.lower():
                 return None
 
-        if self.__get_transaction_value(transaction, "currency") != "EUR":
-            return None
-
-        account = get_account_from(desc, self.mappings)
         amount = round(
             float(
                 self.__get_transaction_value(transaction, "amount").replace(",", ".")
             ),
             2,
         )
+        if self.__get_transaction_value(transaction, "currency") == "EEK":
+            old_amount = amount
+            amount = round(amount / 15.6466, 2)
+            desc += f"{old_amount} EEK -> {amount} EUR"
+
+        # if self.__get_transaction_value(transaction, "currency") != "EUR":
+        #     return None
+
         if debit_credit:
             if debit_credit == "K":
                 increase = amount
@@ -66,6 +72,7 @@ class BaseAccount(object):
         else:
             decrease = abs(amount)
 
+        account = get_account_from(desc, self.mappings)
         return GnuCashTransaction(date, desc, account, increase, decrease)
 
     def _parse_bank_csv(self, iterable):

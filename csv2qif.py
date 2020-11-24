@@ -96,12 +96,14 @@ def __main():
         required=True,
         help="path to config file",
     )
+    # TODO: change bank to format
     parser.add_argument(
         "-b",
         "--bank",
         required=True,
         help="bank name in config file",
     )
+    # TODO: change to qif account
     parser.add_argument(
         "-a",
         "--account",

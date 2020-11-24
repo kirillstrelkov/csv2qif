@@ -47,7 +47,11 @@ def format_date(date):
 def get_account_from(tran_desc, mappings):
     for account, descs in mappings.items():
         for desc in descs:
-            if desc.upper() in tran_desc.upper():
+            try:
+                found = re.search(desc, tran_desc, re.IGNORECASE)
+            except re.error:
+                found = desc.lower() in tran_desc.lower()
+            if found:
                 return account
 
     return "Imbalance-EUR"
