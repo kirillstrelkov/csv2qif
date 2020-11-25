@@ -1,5 +1,5 @@
-import codecs
 import os
+import codecs
 
 
 def save_file(path, content):

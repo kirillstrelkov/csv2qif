@@ -6,7 +6,6 @@ import json
 from collections import namedtuple
 from finance_utils.common import (
     GnuCashTransaction,
-    format_date,
     get_account_from,
     match_description,
 )
@@ -115,13 +114,3 @@ class CSVParser(object):
         assert len(trans) == len(gnucash_trans) + len(skipped_trans)
 
         return gnucash_trans
-
-    def save_gnucash_csv(self, input_path, output_path):
-        gnucase_trans = self.get_gnucash_transactions(input_path)
-
-        with codecs.open(output_path, "wb", encoding="utf8") as f:
-            writer = csv.writer(f, delimiter="\t")
-            for tran in gnucase_trans:
-                writer.writerow(tran)
-
-        print("New file created with gnucash transactions: " + output_path)

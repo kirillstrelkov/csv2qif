@@ -5,7 +5,7 @@ from pprint import pprint
 from unittest import TestCase
 
 from csv2qif import get_qif_trans_from_csv
-from finance_utils.accounts.base import CSVParser, get_csv_format
+from finance_utils.csv_format import CSVParser, get_csv_format
 from finance_utils.file_utils import get_files_and_subfiles
 
 

@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from finance_utils.file_utils import get_files_and_subfiles, save_file
-from finance_utils.accounts.base import CSVParser, get_csv_format
+from finance_utils.csv_format import CSVParser, get_csv_format
 import codecs
 import json
 from argparse import ArgumentParser
