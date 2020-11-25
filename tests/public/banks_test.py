@@ -21,7 +21,7 @@ LImbalance-EUR
         assert actual == expected
 
     def test_bank_a(self):
-        self.assert_qif_trans("bank_a_2016.csv", 12, 6, bank="Bank A")
+        self.assert_qif_trans("bank_a_2016.csv", 12, 6, csv_format="Bank A")
 
     def test_bank_b(self):
-        self.assert_qif_trans("bank_b_2019.csv", 12, 9, bank="Bank B")
+        self.assert_qif_trans("bank_b_2019.csv", 12, 9, csv_format="Bank B")

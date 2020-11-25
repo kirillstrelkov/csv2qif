@@ -9,8 +9,8 @@
             "/tmp/swed_statements/main",
             "/tmp/out.qif",
             "-c", "/home/kirill/workspace/finance_scripts/tests/private/config.json",
-            "-b", "swedbank",
-            "-a", "estonian"
+            "-f", "swedbank",
+            "-a", "swedbank"
         ],
         "type": "python",
         "request": "launch",

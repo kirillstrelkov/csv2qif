@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from finance_utils.file_utils import get_files_and_subfiles, save_file
-from finance_utils.accounts.base import BaseAccount, load_bank
+from finance_utils.accounts.base import CSVParser, get_csv_format
 import codecs
 import json
 from argparse import ArgumentParser
@@ -53,16 +53,19 @@ L{account}
     return "\n".join(output)
 
 
-def get_qif_trans_from_csv(path, bank, mappings):
-    gnucash_trans = BaseAccount(bank, mappings).get_gnucash_transactions(path)
+def get_qif_trans_from_csv(path, bank, mappings, skip_descriptions):
+    gnucash_trans = CSVParser(
+        bank, mappings, skip_descriptions
+    ).get_gnucash_transactions(path)
     return get_qif_trans(gnucash_trans)
 
 
 def csv2qif(input, config, bank_name, gnucash_account_alias):
-    bank = load_bank(config, bank_name)
+    bank = get_csv_format(config, bank_name)
     config = json.load(codecs.open(config))
     gnucash_account = config["gnucash_aliases"][gnucash_account_alias]
     mappings = config["mappings"]
+    skip_descriptions = config.get("skip_descriptions")
 
     if os.path.isdir(input):
         inputs = get_files_and_subfiles(input, ".csv")
@@ -71,7 +74,7 @@ def csv2qif(input, config, bank_name, gnucash_account_alias):
 
     qif_trans = []
     for input in inputs:
-        qif_trans += get_qif_trans_from_csv(input, bank, mappings)
+        qif_trans += get_qif_trans_from_csv(input, bank, mappings, skip_descriptions)
 
     return qif_trans_to_string(qif_trans, bank, gnucash_account)
 
@@ -96,14 +99,12 @@ def __main():
         required=True,
         help="path to config file",
     )
-    # TODO: change bank to format
     parser.add_argument(
-        "-b",
-        "--bank",
+        "-f",
+        "--format",
         required=True,
-        help="bank name in config file",
+        help="format to be used from config file",
     )
-    # TODO: change to qif account
     parser.add_argument(
         "-a",
         "--account",
@@ -112,7 +113,7 @@ def __main():
     )
 
     args = parser.parse_args()
-    save_qif(args.input, args.output, args.config, args.bank, args.account)
+    save_qif(args.input, args.output, args.config, args.format, args.account)
 
 
 if __name__ == "__main__":

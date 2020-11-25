@@ -5,13 +5,13 @@ from pprint import pprint
 from unittest import TestCase
 
 from csv2qif import get_qif_trans_from_csv
-from finance_utils.accounts.base import BaseAccount, load_bank
+from finance_utils.accounts.base import CSVParser, get_csv_format
 from finance_utils.file_utils import get_files_and_subfiles
 
 
 class DataTestCase(TestCase):
     DATA_FOLDER = ""
-    BANK = None
+    CSV_FORMAT = None
 
     def get_data_file(self, name):
         assert self.TYPE in ("public", "private")
@@ -23,16 +23,19 @@ class DataTestCase(TestCase):
         return found_files[0]
 
     def assert_qif_trans(
-        self, filename, expected_nr_qifs, expected_nr_imbalanced, bank=None
+        self, filename, expected_nr_qifs, expected_nr_imbalanced, csv_format=None
     ):
-        bank = bank or self.BANK
-        assert bank is not None
+        csv_format = csv_format or self.CSV_FORMAT
+        assert csv_format is not None
+
         path = self.get_data_file(self.DATA_FOLDER + filename)
+        config = json.load(codecs.open(self.CONFIG))
 
         qifs = get_qif_trans_from_csv(
             path,
-            load_bank(self.CONFIG, bank),
-            json.load(codecs.open(self.CONFIG))["mappings"],
+            get_csv_format(self.CONFIG, csv_format),
+            config["mappings"],
+            config.get("skip_descriptions"),
         )
         imbalanced = [qif for qif in qifs if "imbalance" in qif.account.lower()]
 
@@ -44,17 +47,19 @@ class DataTestCase(TestCase):
 
 
 class GnucashTestCase(DataTestCase):
-    BANK = None
+    CSV_FORMAT = None
     BAD_TRANS_RATIO = 0.3
 
     def assert_parse_and_format(self, filename, total):
-        bank = load_bank(
+        bank = get_csv_format(
             self.CONFIG,
-            self.BANK,
+            self.CSV_FORMAT,
         )
-        mappings = json.load(codecs.open(self.CONFIG))["mappings"]
+        config = json.load(codecs.open(self.CONFIG))
+        mappings = config["mappings"]
+        skip_descriptions = config.get("skip_descriptions")
 
-        trans = BaseAccount(bank, mappings).get_gnucash_transactions(
+        trans = CSVParser(bank, mappings, skip_descriptions).get_gnucash_transactions(
             self.get_data_file(filename)
         )
         assert len(trans) == total

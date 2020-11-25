@@ -44,14 +44,18 @@ def format_date(date):
     return date
 
 
+def match_description(description, regexp_or_string):
+    try:
+        match = re.search(regexp_or_string, description, re.IGNORECASE)
+    except re.error:
+        match = regexp_or_string.lower() in description.lower()
+    return match
+
+
 def get_account_from(tran_desc, mappings):
     for account, descs in mappings.items():
         for desc in descs:
-            try:
-                found = re.search(desc, tran_desc, re.IGNORECASE)
-            except re.error:
-                found = desc.lower() in tran_desc.lower()
-            if found:
+            if match_description(tran_desc, desc):
                 return account
 
     return "Imbalance-EUR"

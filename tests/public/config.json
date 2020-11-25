@@ -1,5 +1,5 @@
 {
-    "banks": [{
+    "formats": [{
         "name": "Bank A",
         "encoding": "utf8",
         "delimiter": ";",
@@ -16,6 +16,7 @@
         "bank_a": "Assets:Current Assets:Bank A",
         "bank_b": "Assets:Current Assets:Bank B"
     },
+    "skip_descriptions": ["Opening balance", "Turnover", "closing balance"],
     "mappings": {
         "Expenses:Bank Service Charge": [
             "Norris and Sons",

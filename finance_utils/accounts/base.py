@@ -4,31 +4,39 @@ import os
 import re
 import json
 from collections import namedtuple
-from finance_utils.common import format_date, get_account_from, GnuCashTransaction
+from finance_utils.common import (
+    GnuCashTransaction,
+    format_date,
+    get_account_from,
+    match_description,
+)
 
-Bank = namedtuple("Bank", ["name", "encoding", "delimiter", "description", "date"])
+CSVFormat = namedtuple(
+    "CSVFormat", ["name", "encoding", "delimiter", "description", "date"]
+)
 
 
-def load_bank(path, name):
-    for bank in json.load(codecs.open(path, encoding="utf8")).get("banks", []):
-        if bank["name"] == name:
-            return Bank(*[bank[field] for field in Bank._fields])
-    assert False, f"Wrong name: {name}"
+def get_csv_format(path, format_name):
+    for format in json.load(codecs.open(path, encoding="utf8")).get("formats", []):
+        if format["name"] == format_name:
+            return CSVFormat(*[format[field] for field in CSVFormat._fields])
+    assert False, f"Wrong format name: {format_name}"
 
 
-class BaseAccount(object):
-    def __init__(self, bank, mappings=None):
-        self.bank = bank
-        self.mappings = mappings
+class CSVParser(object):
+    def __init__(self, format, mappings, skip_descriptions):
+        self.format = format
+        self.mappings = mappings or {}
+        self.skip_descriptions = skip_descriptions or []
 
     def __get_transaction_value(self, transaction, field):
-        bank_field_value = getattr(self.bank, field, None)
-        if type(bank_field_value) == list:
-            value = " ".join([getattr(transaction, v) for v in bank_field_value])
+        field_value = getattr(self.format, field, None)
+        if type(field_value) == list:
+            value = " ".join([getattr(transaction, v) for v in field_value])
             if field == "description":
-                value = re.sub("[\t;,\s]+", " ", value)
-        elif bank_field_value:
-            value = getattr(transaction, bank_field_value)
+                value = re.sub(r"[\t;,\s]+", " ", value)
+        elif field_value:
+            value = getattr(transaction, field_value)
         else:
             value = getattr(transaction, field, None)
 
@@ -41,11 +49,8 @@ class BaseAccount(object):
         debit_credit = self.__get_transaction_value(transaction, "debit_credit")
         date = self.__get_transaction_value(transaction, "date")
 
-        #  TODO: move to config
-        bad_descs = ["Opening balance", "Turnover", "closing balance"]
-        for bad_desc in bad_descs:
-            # TODO: imporove?
-            if bad_desc.lower() in desc.lower():
+        for skip_desc in self.skip_descriptions:
+            if match_description(desc, skip_desc):
                 return None
 
         amount = round(
@@ -54,13 +59,12 @@ class BaseAccount(object):
             ),
             2,
         )
+
+        # Note: special case for Estonia - convert transaction from EEK to EUR
         if self.__get_transaction_value(transaction, "currency") == "EEK":
             old_amount = amount
             amount = round(amount / 15.6466, 2)
             desc += f"{old_amount} EEK -> {amount} EUR"
-
-        # if self.__get_transaction_value(transaction, "currency") != "EUR":
-        #     return None
 
         if debit_credit:
             if debit_credit == "K":
@@ -80,7 +84,7 @@ class BaseAccount(object):
         trans = []
         Transaction = None
 
-        for row in csv.reader(iterable, delimiter=self.bank.delimiter):
+        for row in csv.reader(iterable, delimiter=self.format.delimiter):
             if len(row) == 1 and row[0].count("\t") > 4:
                 row = row[0].split("\t")
             if Transaction:
@@ -98,7 +102,7 @@ class BaseAccount(object):
         trans = []
         if os.path.isfile(path):
             with codecs.open(
-                path, "rb", encoding=self.bank.encoding, errors="replace"
+                path, "rb", encoding=self.format.encoding, errors="replace"
             ) as f:
                 trans += self._parse_bank_csv(f)
         else:
