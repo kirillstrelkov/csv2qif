@@ -5,25 +5,30 @@ from finance_utils.csv_format import CSVParser, get_csv_format
 import codecs
 import json
 from argparse import ArgumentParser
+from loguru import logger
 import os
 
 
-def get_qif_trans(gnucash_trans):
+def get_qif_trans(gnucash_trans, account_from=None):
     trans = []
     Transaction = namedtuple(
         "QIFTransaction", ["date", "amount", "description", "account"]
     )
-    for gnucas_tran in gnucash_trans:
-        trans.append(
-            Transaction(
-                gnucas_tran.date,
-                gnucas_tran.increase
-                if type(gnucas_tran.increase) == float
-                else -gnucas_tran.decrease,
-                gnucas_tran.description,
-                gnucas_tran.account,
+    for tran in gnucash_trans:
+        if account_from == tran.account:
+            trans_as_str = ", ".join(
+                [str(getattr(tran, field)) for field in tran._fields]
             )
-        )
+            logger.warning(f"SKIP: Found transaction with same account: {trans_as_str}")
+        else:
+            trans.append(
+                Transaction(
+                    tran.date,
+                    tran.increase if type(tran.increase) == float else -tran.decrease,
+                    tran.description,
+                    tran.account,
+                )
+            )
     return trans
 
 
@@ -53,29 +58,50 @@ L{account}
     return "\n".join(output)
 
 
-def get_qif_trans_from_csv(path, bank, mappings, skip_descriptions):
+def get_qif_trans_from_csv(path, bank, mappings, skip_descriptions, account_from=None):
     gnucash_trans = CSVParser(
         bank, mappings, skip_descriptions
     ).get_gnucash_transactions(path)
-    return get_qif_trans(gnucash_trans)
+    return get_qif_trans(gnucash_trans, account_from=account_from)
 
 
-def csv2qif(input, config, bank_name, gnucash_account_alias):
+def _get_qif_trans(input, config, bank_name, gnucash_account_alias):
     bank = get_csv_format(config, bank_name)
-    config = json.load(codecs.open(config))
-    gnucash_account = config["gnucash_aliases"][gnucash_account_alias]
-    mappings = config["mappings"]
-    skip_descriptions = config.get("skip_descriptions")
+    config_json = json.load(codecs.open(config))
+    gnucash_account = config_json["gnucash_aliases"][gnucash_account_alias]
+    mappings = config_json["mappings"]
+    skip_descriptions = config_json.get("skip_descriptions")
 
-    if os.path.isdir(input):
+    if type(input) == list:
+        inputs = input
+    elif type(input) == str and os.path.isdir(input):
         inputs = get_files_and_subfiles(input, ".csv")
+        inputs += get_files_and_subfiles(input, ".CSV")
     else:
         inputs = [input]
 
     qif_trans = []
     for input in inputs:
-        qif_trans += get_qif_trans_from_csv(input, bank, mappings, skip_descriptions)
+        qif_trans += get_qif_trans_from_csv(
+            input, bank, mappings, skip_descriptions, account_from=gnucash_account
+        )
 
+    # NOTE: set is used to remove duplicates - ordered is not preserved!
+    qif_trans_no_dup = list(set(qif_trans))
+    if len(qif_trans_no_dup) != len(qif_trans):
+        logger.warning(
+            f"Found multiple duplicated transactions: all = {len(qif_trans)}, without duplicates = {len(qif_trans_no_dup)}"
+        )
+    return qif_trans_no_dup
+
+
+def csv2qif(input, config, bank_name, gnucash_account_alias):
+    gnucash_account = json.load(codecs.open(config))["gnucash_aliases"][
+        gnucash_account_alias
+    ]
+    qif_trans = _get_qif_trans(input, config, bank_name, gnucash_account_alias)
+
+    bank = get_csv_format(config, bank_name)
     return qif_trans_to_string(qif_trans, bank, gnucash_account)
 
 

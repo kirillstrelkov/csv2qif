@@ -1,3 +1,4 @@
+loguru
 pytest
 pytest-dotenv
 pytest-cov

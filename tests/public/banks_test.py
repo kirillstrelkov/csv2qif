@@ -4,6 +4,7 @@ from csv2qif import csv2qif
 
 class QIFTransactionsTest(DataTestCase, PublicConfig):
     TYPE = "public"
+    GNUCASH_ALIAS = "bank_a"
 
     def test_account_name(self):
         expected = """!Account

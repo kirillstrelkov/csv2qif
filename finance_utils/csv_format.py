@@ -32,8 +32,6 @@ class CSVParser(object):
         field_value = getattr(self.format, field, None)
         if type(field_value) == list:
             value = " ".join([getattr(transaction, v) for v in field_value])
-            if field == "description":
-                value = re.sub(r"[\t;,\s]+", " ", value)
         elif field_value:
             value = getattr(transaction, field_value)
         else:
@@ -41,10 +39,18 @@ class CSVParser(object):
 
         return value
 
+    def __fix_description(self, description):
+        description = re.sub(r"[\t;,\s]+", " ", description)
+        description = re.sub(r"^[\"']+", "", description)
+        description = re.sub(r"[\"']+$", "", description)
+        return description
+
     def _format_gnucash_transaction(self, transaction):
         increase = ""
         decrease = ""
-        desc = self.__get_transaction_value(transaction, "description")
+        desc = self.__fix_description(
+            self.__get_transaction_value(transaction, "description")
+        )
         debit_credit = self.__get_transaction_value(transaction, "debit_credit")
         date = self.__get_transaction_value(transaction, "date")
 

@@ -6,11 +6,11 @@
     "configurations": [{
         "name": "Python: csv2qif.py",
         "args": [
-            "/tmp/swed_statements/main",
-            "/tmp/out.qif",
+            "/home/kirill/workspace/finance_scripts/tests/private/data/berliner",
+            "/tmp/out_berliner.qif",
             "-c", "/home/kirill/workspace/finance_scripts/tests/private/config.json",
-            "-f", "swedbank",
-            "-a", "swedbank"
+            "-f", "berliner",
+            "-a", "berliner"
         ],
         "type": "python",
         "request": "launch",
