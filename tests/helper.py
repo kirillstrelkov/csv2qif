@@ -39,6 +39,7 @@ class DataTestCase(TestCase):
             get_csv_format(self.CONFIG, csv_format),
             self.get_config_value("mappings"),
             self.get_config_value("skip_descriptions"),
+            skip_currencies=self.get_config_value("skip_currencies"),
             account_from=qif_account,
         )
         self.__assert_imbalanced_and_counts(
@@ -89,10 +90,11 @@ class GnucashTestCase(DataTestCase):
         )
         mappings = self.get_config_value("mappings")
         skip_descriptions = self.get_config_value("skip_descriptions")
+        skip_currencies = self.get_config_value("skip_currencies")
 
-        trans = CSVParser(bank, mappings, skip_descriptions).get_gnucash_transactions(
-            self.get_data_file(filename)
-        )
+        trans = CSVParser(
+            bank, mappings, skip_descriptions, skip_currencies
+        ).get_gnucash_transactions(self.get_data_file(filename))
         assert len(trans) == total
 
         trans = [t for t in trans if t.account == ""]

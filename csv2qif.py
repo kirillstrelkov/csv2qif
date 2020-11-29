@@ -58,9 +58,11 @@ L{account}
     return "\n".join(output)
 
 
-def get_qif_trans_from_csv(path, bank, mappings, skip_descriptions, account_from=None):
+def get_qif_trans_from_csv(
+    path, bank, mappings, skip_descriptions, skip_currencies=None, account_from=None
+):
     gnucash_trans = CSVParser(
-        bank, mappings, skip_descriptions
+        bank, mappings, skip_descriptions, skip_currencies
     ).get_gnucash_transactions(path)
     return get_qif_trans(gnucash_trans, account_from=account_from)
 
@@ -71,6 +73,7 @@ def _get_qif_trans(input, config, bank_name, gnucash_account_alias):
     gnucash_account = config_json["gnucash_aliases"][gnucash_account_alias]
     mappings = config_json["mappings"]
     skip_descriptions = config_json.get("skip_descriptions")
+    skip_currencies = config_json.get("skip_currencies")
 
     if type(input) == list:
         inputs = input
@@ -83,7 +86,12 @@ def _get_qif_trans(input, config, bank_name, gnucash_account_alias):
     qif_trans = []
     for input in inputs:
         qif_trans += get_qif_trans_from_csv(
-            input, bank, mappings, skip_descriptions, account_from=gnucash_account
+            input,
+            bank,
+            mappings,
+            skip_descriptions,
+            skip_currencies=skip_currencies,
+            account_from=gnucash_account,
         )
 
     # NOTE: set is used to remove duplicates - ordered is not preserved!
@@ -92,7 +100,7 @@ def _get_qif_trans(input, config, bank_name, gnucash_account_alias):
         logger.warning(
             f"Found multiple duplicated transactions: all = {len(qif_trans)}, without duplicates = {len(qif_trans_no_dup)}"
         )
-    return qif_trans_no_dup
+    return sorted(qif_trans_no_dup, key=lambda q: (q.date, q.description))
 
 
 def csv2qif(input, config, bank_name, gnucash_account_alias):

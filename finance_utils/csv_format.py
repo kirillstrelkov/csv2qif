@@ -24,10 +24,11 @@ def get_csv_format(path, format_name):
 
 
 class CSVParser(object):
-    def __init__(self, format, mappings, skip_descriptions):
+    def __init__(self, format, mappings, skip_descriptions, skip_currencies=None):
         self.format = format
-        self.mappings = mappings or {}
-        self.skip_descriptions = skip_descriptions or []
+        self.mappings = mappings
+        self.skip_descriptions = skip_descriptions
+        self.skip_currencies = skip_currencies or []
 
     def __get_transaction_value(self, transaction, field):
         field_value = getattr(self.format, field, None)
@@ -72,8 +73,10 @@ class CSVParser(object):
             2,
         )
 
-        # TODO: Add skip if config value is set
-        if self.__get_transaction_value(transaction, "currency") == "USD":
+        if (
+            self.__get_transaction_value(transaction, "currency")
+            in self.skip_currencies
+        ):
             return None
 
         # Note: special case for Estonia - convert transaction from EEK to EUR
