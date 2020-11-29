@@ -6,6 +6,10 @@ GnuCashTransaction = namedtuple(
 )
 
 
+def text_to_field(text):
+    return re.sub(r"\W", "_", text).lower()
+
+
 def match_description(description, regexp_or_string):
     try:
         match = re.search(regexp_or_string, description, re.IGNORECASE)

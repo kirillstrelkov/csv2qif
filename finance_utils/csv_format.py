@@ -8,6 +8,7 @@ from finance_utils.common import (
     GnuCashTransaction,
     get_account_from,
     match_description,
+    text_to_field,
 )
 
 CSVFormat = namedtuple(
@@ -31,26 +32,32 @@ class CSVParser(object):
     def __get_transaction_value(self, transaction, field):
         field_value = getattr(self.format, field, None)
         if type(field_value) == list:
-            value = " ".join([getattr(transaction, v) for v in field_value])
+            value = " ".join(
+                [
+                    self.__fix_text(getattr(transaction, text_to_field(v)))
+                    for v in field_value
+                ]
+            )
         elif field_value:
             value = getattr(transaction, field_value)
         else:
             value = getattr(transaction, field, None)
 
+        if field_value:
+            value = self.__fix_text(value)
+
         return value
 
-    def __fix_description(self, description):
-        description = re.sub(r"[\t;,\s]+", " ", description)
-        description = re.sub(r"^[\"']+", "", description)
-        description = re.sub(r"[\"']+$", "", description)
-        return description
+    def __fix_text(self, text):
+        text = re.sub(r"[\t;,\s]+", " ", text)
+        text = re.sub(r"^[\"']+", "", text)
+        text = re.sub(r"[\"']+$", "", text)
+        return text
 
     def _format_gnucash_transaction(self, transaction):
         increase = ""
         decrease = ""
-        desc = self.__fix_description(
-            self.__get_transaction_value(transaction, "description")
-        )
+        desc = self.__get_transaction_value(transaction, "description")
         debit_credit = self.__get_transaction_value(transaction, "debit_credit")
         date = self.__get_transaction_value(transaction, "date")
 
@@ -64,6 +71,10 @@ class CSVParser(object):
             ),
             2,
         )
+
+        # TODO: Add skip if config value is set
+        if self.__get_transaction_value(transaction, "currency") == "USD":
+            return None
 
         # Note: special case for Estonia - convert transaction from EEK to EUR
         if self.__get_transaction_value(transaction, "currency") == "EEK":
@@ -96,9 +107,7 @@ class CSVParser(object):
                 t = Transaction(*row)
                 trans.append(t)
             else:
-                names = [
-                    "x" if len(r) == 0 else re.sub(r"\W", "_", r).lower() for r in row
-                ]
+                names = [text_to_field(r) if r else "x" for r in row]
                 Transaction = namedtuple("Transaction", names)
 
         return trans
