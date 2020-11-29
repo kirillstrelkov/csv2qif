@@ -83,7 +83,7 @@ class CSVParser(object):
         if self.__get_transaction_value(transaction, "currency") == "EEK":
             old_amount = amount
             amount = round(amount / 15.6466, 2)
-            desc += f"{old_amount} EEK -> {amount} EUR"
+            desc += f" {old_amount} EEK -> {amount} EUR"
 
         if debit_credit:
             if debit_credit == "K":
