@@ -13,9 +13,9 @@
         {
             "name": "Python: csv2qif.py",
             "args": [
-                "/home/kirill/workspace/finance_scripts/tests/private/data/berliner",
+                "${workspaceFolder}/tests/private/data/berliner",
                 "/tmp/out_berliner.qif",
-                "-c", "/home/kirill/workspace/finance_scripts/tests/private/config.json",
+                "-c", "${workspaceFolder}/tests/private/config.json",
                 "-f", "berliner",
                 "-a", "berliner"
             ],
