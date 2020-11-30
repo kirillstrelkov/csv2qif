@@ -13,11 +13,11 @@
         {
             "name": "Python: csv2qif.py",
             "args": [
-                "${workspaceFolder}/tests/private/data/berliner",
-                "/tmp/out_berliner.qif",
+                "${workspaceFolder}/tests/private/data/sparkasse",
+                "/tmp/out_sparkasse.qif",
                 "-c", "${workspaceFolder}/tests/private/config.json",
-                "-f", "berliner",
-                "-a", "berliner"
+                "-f", "sparkasse",
+                "-a", "sparkasse"
             ],
             "type": "python",
             "request": "launch",

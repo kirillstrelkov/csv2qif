@@ -32,7 +32,7 @@ def get_qif_trans(gnucash_trans, account_from=None):
     return trans
 
 
-def qif_trans_to_string(qif_trans, bank, gnucash_account):
+def qif_trans_to_string(qif_trans, format, gnucash_account):
     header = """!Account
 N{account_name}
 ^"""
@@ -59,16 +59,28 @@ L{account}
 
 
 def get_qif_trans_from_csv(
-    path, bank, mappings, skip_descriptions, skip_currencies=None, account_from=None
+    path_or_paths,
+    format,
+    mappings,
+    skip_descriptions,
+    skip_currencies=None,
+    account_from=None,
 ):
-    gnucash_trans = CSVParser(
-        bank, mappings, skip_descriptions, skip_currencies
-    ).get_gnucash_transactions(path)
+    parser = CSVParser(format, mappings, skip_descriptions, skip_currencies)
+    if type(path_or_paths) == str:
+        paths = [path_or_paths]
+    else:
+        paths = path_or_paths
+
+    gnucash_trans = []
+    for path in paths:
+        gnucash_trans += parser.get_gnucash_transactions(path)
+
     return get_qif_trans(gnucash_trans, account_from=account_from)
 
 
-def _get_qif_trans(input, config, bank_name, gnucash_account_alias):
-    bank = get_csv_format(config, bank_name)
+def _get_qif_trans(input, config, format, gnucash_account_alias):
+    csv_format = get_csv_format(config, format)
     config_json = json.load(codecs.open(config))
     gnucash_account = config_json["gnucash_aliases"][gnucash_account_alias]
     mappings = config_json["mappings"]
@@ -87,7 +99,7 @@ def _get_qif_trans(input, config, bank_name, gnucash_account_alias):
     for input in inputs:
         qif_trans += get_qif_trans_from_csv(
             input,
-            bank,
+            csv_format,
             mappings,
             skip_descriptions,
             skip_currencies=skip_currencies,
@@ -103,18 +115,18 @@ def _get_qif_trans(input, config, bank_name, gnucash_account_alias):
     return sorted(qif_trans_no_dup, key=lambda q: (q.date, q.description))
 
 
-def csv2qif(input, config, bank_name, gnucash_account_alias):
+def csv2qif(input, config, format, gnucash_account_alias):
     gnucash_account = json.load(codecs.open(config))["gnucash_aliases"][
         gnucash_account_alias
     ]
-    qif_trans = _get_qif_trans(input, config, bank_name, gnucash_account_alias)
+    qif_trans = _get_qif_trans(input, config, format, gnucash_account_alias)
 
-    bank = get_csv_format(config, bank_name)
-    return qif_trans_to_string(qif_trans, bank, gnucash_account)
+    csv_format = get_csv_format(config, format)
+    return qif_trans_to_string(qif_trans, csv_format, gnucash_account)
 
 
-def save_qif(input, output, config, bank_name, gnucash_account_alias):
-    save_file(output, csv2qif(input, config, bank_name, gnucash_account_alias))
+def save_qif(input, output, config, format, gnucash_account_alias):
+    save_file(output, csv2qif(input, config, format, gnucash_account_alias))
 
 
 def __main():
