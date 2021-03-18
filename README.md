@@ -1,6 +1,6 @@
 # CSV2QIF
 
-Application which converts CSV format to QIF.
+Application which converts CSV format to QIF and categarize transactions based on config file.
 
 Example usage with [config from tests](tests/public/config.json):
 
