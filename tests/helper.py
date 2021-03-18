@@ -90,7 +90,7 @@ class DataTestCase(TestCase):
 
 class GnucashTestCase(DataTestCase):
     CSV_FORMAT = None
-    BAD_TRANS_RATIO = 0.3
+    BAD_TRANS_RATIO = 0.1
 
     def assert_parse_and_format(self, filename, total):
         csv_format = get_csv_format(
