@@ -13,11 +13,11 @@
         {
             "name": "Python: csv2qif.py",
             "args": [
-                "${workspaceFolder}/tests/private/data/sparkasse",
-                "/tmp/out_sparkasse.qif",
+                "/tmp/swed_cred.csv",
+                "/tmp/out_swed_cred.qif",
                 "-c", "${workspaceFolder}/tests/private/config.json",
-                "-f", "sparkasse",
-                "-a", "sparkasse"
+                "-f", "swedbank",
+                "-a", "swedbank_credit"
             ],
             "type": "python",
             "request": "launch",
