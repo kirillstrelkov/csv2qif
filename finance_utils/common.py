@@ -14,7 +14,11 @@ def match_description(description, regexp_or_string):
     try:
         match = re.search(regexp_or_string, description, re.IGNORECASE)
     except re.error:
+        match = None
+
+    if match is None:
         match = regexp_or_string.lower() in description.lower()
+
     return match
 
 
