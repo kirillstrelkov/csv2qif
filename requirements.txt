@@ -1,6 +1,5 @@
 loguru
 pytest
-pytest-dotenv
 pytest-cov
 black
 flake8
