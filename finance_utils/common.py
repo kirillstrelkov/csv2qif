@@ -1,9 +1,39 @@
+import codecs
+import json
 import re
 from collections import namedtuple
 
 GnuCashTransaction = namedtuple(
     "GnuCashTransaction", ["date", "description", "account", "increase", "decrease"]
 )
+
+
+def get_config_value(config, key):
+    assert config is not None
+    config = json.load(codecs.open(config))
+    return config.get(key)
+
+
+def get_mappings_conflicts(config_path):
+    conflicts = []
+
+    mappings = get_config_value(config_path, "mappings")
+
+    for account1, regexps1 in mappings.items():
+        for account2, regexps2 in mappings.items():
+            if account1 == account2:
+                continue
+
+            for regexp1 in regexps1:
+                for regexp2 in regexps2:
+                    if regexp1 == regexps2:
+                        continue
+
+                    if match_description(regexp1, regexp2):
+                        conflicts.append(
+                            f"Found match between '{account1}' '{regexp1}' and '{account2}' '{regexp2}'"
+                        )
+    return conflicts
 
 
 def text_to_field(text):

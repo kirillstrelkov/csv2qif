@@ -1,13 +1,12 @@
 import os
-import json
-import codecs
+import re
 from unittest import TestCase
-from loguru import logger
 
 from csv2qif import get_qif_trans_from_csv
+from finance_utils.common import get_config_value
 from finance_utils.csv_format import CSVParser, get_csv_format
 from finance_utils.file_utils import get_files_and_subfiles
-import re
+from loguru import logger
 
 
 class DataTestCase(TestCase):
@@ -38,7 +37,9 @@ class DataTestCase(TestCase):
         csv_format = csv_format or self.CSV_FORMAT
         assert csv_format is not None
 
-        qif_account = self.get_config_value("gnucash_aliases").get(self.GNUCASH_ALIAS)
+        qif_account = get_config_value(self.CONFIG, "gnucash_aliases").get(
+            self.GNUCASH_ALIAS
+        )
         assert qif_account
 
         files = self.get_data_files(filename)
@@ -46,9 +47,9 @@ class DataTestCase(TestCase):
         trans = get_qif_trans_from_csv(
             files,
             get_csv_format(self.CONFIG, csv_format),
-            self.get_config_value("mappings"),
-            self.get_config_value("skip_descriptions"),
-            skip_currencies=self.get_config_value("skip_currencies"),
+            get_config_value(self.CONFIG, "mappings"),
+            get_config_value(self.CONFIG, "skip_descriptions"),
+            skip_currencies=get_config_value(self.CONFIG, "skip_currencies"),
             account_from=qif_account,
         )
         self.__assert_imbalanced_and_counts(
@@ -82,11 +83,6 @@ class DataTestCase(TestCase):
             logger.error(t)
         assert len(trans_to_same_account) == 0
 
-    def get_config_value(self, key):
-        assert self.CONFIG is not None
-        config = json.load(codecs.open(self.CONFIG))
-        return config.get(key)
-
 
 class GnucashTestCase(DataTestCase):
     CSV_FORMAT = None
@@ -97,9 +93,9 @@ class GnucashTestCase(DataTestCase):
             self.CONFIG,
             self.CSV_FORMAT,
         )
-        mappings = self.get_config_value("mappings")
-        skip_descriptions = self.get_config_value("skip_descriptions")
-        skip_currencies = self.get_config_value("skip_currencies")
+        mappings = get_config_value(self.CONFIG, "mappings")
+        skip_descriptions = get_config_value(self.CONFIG, "skip_descriptions")
+        skip_currencies = get_config_value(self.CONFIG, "skip_currencies")
 
         trans = CSVParser(
             csv_format, mappings, skip_descriptions, skip_currencies
