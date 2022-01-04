@@ -19,9 +19,11 @@ def get_mappings_conflicts(config_path):
 
     mappings = get_config_value(config_path, "mappings")
 
+    index1 = 0
     for account1, regexps1 in mappings.items():
+        index2 = 0
         for account2, regexps2 in mappings.items():
-            if account1 == account2:
+            if account1 == account2 and regexps1 == regexps2:
                 continue
 
             for regexp1 in regexps1:
@@ -29,10 +31,14 @@ def get_mappings_conflicts(config_path):
                     if regexp1 == regexps2:
                         continue
 
-                    if match_description(regexp1, regexp2):
+                    if match_description(regexp1, regexp2) and index1 > index2:
                         conflicts.append(
-                            f"Found match between '{account1}' '{regexp1}' and '{account2}' '{regexp2}'"
+                            f"Found match between '{account1}, {regexp1}, {index1}' and '{account2}, {regexp2}, {index2}'"
                         )
+
+            index2 += 1
+        index1 += 1
+
     return conflicts
 
 

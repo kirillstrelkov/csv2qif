@@ -116,6 +116,8 @@ def _get_qif_trans(input, config, format, gnucash_account_alias):
 
 
 def csv2qif(input, config, format, gnucash_account_alias):
+    # TODO: add check for config mappings and warn if found one
+
     gnucash_account = json.load(codecs.open(config))["gnucash_aliases"][
         gnucash_account_alias
     ]
