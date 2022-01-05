@@ -47,6 +47,7 @@ def text_to_field(text):
 
 
 def match_description(description, regexp_or_string):
+    # TODO: add check for special characters for regexp
     try:
         match = re.search(regexp_or_string, description, re.IGNORECASE)
     except re.error:
