@@ -37,6 +37,7 @@ class CSVParser(object):
                 [
                     self.__fix_text(getattr(transaction, text_to_field(v)))
                     for v in field_value
+                    if hasattr(transaction, v)
                 ]
             )
         elif field_value:
