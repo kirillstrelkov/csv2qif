@@ -1,12 +1,13 @@
-from collections import namedtuple
-
-from finance_utils.file_utils import get_files_and_subfiles, save_file
-from finance_utils.csv_format import CSVParser, get_csv_format
 import codecs
 import json
-from argparse import ArgumentParser
-from loguru import logger
 import os
+from argparse import ArgumentParser
+from collections import namedtuple
+
+from loguru import logger
+
+from finance_utils.csv_format import CSVParser, get_csv_format
+from finance_utils.file_utils import get_files_and_subfiles, save_file
 
 
 def get_qif_trans(gnucash_trans, account_from=None):
@@ -166,3 +167,6 @@ def __main():
 
 if __name__ == "__main__":
     __main()
+
+
+# TODO: add check for data - parsing and formatting should be possible
