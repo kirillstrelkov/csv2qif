@@ -110,8 +110,11 @@ def _get_qif_trans(input, config, format, gnucash_account_alias):
     # NOTE: set is used to remove duplicates - ordered is not preserved!
     qif_trans_no_dup = list(set(qif_trans))
     if len(qif_trans_no_dup) != len(qif_trans):
+        diff = "\n".join(
+            [str(trans) for trans in qif_trans_no_dup if qif_trans.count(trans) > 1]
+        )
         logger.warning(
-            f"Found multiple duplicated transactions: all = {len(qif_trans)}, without duplicates = {len(qif_trans_no_dup)}"
+            f"Found multiple duplicated transactions: all = {len(qif_trans)}, without duplicates = {len(qif_trans_no_dup)}:\n{diff}"
         )
     return sorted(qif_trans_no_dup, key=lambda q: (q.date, q.description))
 
