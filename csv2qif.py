@@ -3,6 +3,7 @@ import json
 import os
 from argparse import ArgumentParser
 from collections import namedtuple
+from multiprocessing import Pool, cpu_count
 
 from loguru import logger
 
@@ -73,9 +74,14 @@ def get_qif_trans_from_csv(
     else:
         paths = path_or_paths
 
-    gnucash_trans = []
-    for path in paths:
-        gnucash_trans += parser.get_gnucash_transactions(path)
+    # TODO: quick fix - small speed up, profile to find bottleneck
+    path_trans = Pool(cpu_count() - 1).map(parser.get_gnucash_transactions, paths)
+    gnucash_trans = [tran for sub_list in path_trans for tran in sub_list]
+
+    # old implementation:
+    # gnucash_trans = []
+    # for path in paths:
+    #     gnucash_trans += parser.get_gnucash_transactions(path)
 
     return get_qif_trans(gnucash_trans, account_from=account_from)
 
