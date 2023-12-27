@@ -1,29 +1,25 @@
-import os
+"""File utilities."""
 import codecs
+from pathlib import Path
 
 
-def save_file(path, content):
+def save_file(path: str, content: str) -> None:
+    """Save text to file."""
     with codecs.open(path, "wb", "utf8") as f:
         f.write(content)
 
 
-def get_files_and_subfiles(folder, suffix, recursively=True):
-    files = []
-    if recursively:
-        for root, _, dirfiles in os.walk(folder):
-            for filename in dirfiles:
-                path = os.path.join(root, filename)
-                if file_ends_with(path, suffix):
-                    files.append(path)
-    else:
-        files += [
-            os.path.join(folder, f)
-            for f in os.listdir(folder)
-            if file_ends_with(os.path.join(folder, f), suffix)
-        ]
-
-    return files
+def get_files_and_subfiles(
+    folder: str | Path,
+    suffix: str,
+    *,
+    recursively: bool = True,
+) -> list[Path]:
+    """Get list of files inside folder."""
+    pattern = "**/*" + suffix if recursively else "*" + suffix
+    return list(Path(folder).glob(pattern))
 
 
-def file_ends_with(path, suffix):
+def file_ends_with(path: str, suffix: str) -> bool:
+    """Return True of file ends with suffix."""
     return path.endswith(suffix)
