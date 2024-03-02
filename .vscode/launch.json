@@ -4,25 +4,10 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [{
-            "name": "Python: Current File",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Python: csv2qif.py",
-            "args": [
-                "/tmp/swed_cred.csv",
-                "/tmp/out_swed_cred.qif",
-                "-c", "${workspaceFolder}/tests/private/config.json",
-                "-f", "swedbank",
-                "-a", "swedbank_credit"
-            ],
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/csv2qif.py",
-            "console": "integratedTerminal"
-        }
-    ]
+        "name": "Python: Current File",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${file}",
+        "console": "integratedTerminal"
+    }]
 }
