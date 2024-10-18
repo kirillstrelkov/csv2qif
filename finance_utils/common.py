@@ -1,4 +1,5 @@
 """Common functions."""
+
 import codecs
 import json
 import re
