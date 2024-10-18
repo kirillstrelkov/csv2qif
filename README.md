@@ -13,6 +13,8 @@ csv2qif /tmp/my_bank.csv /tmp/out.qif -c tests/public/config.json -f 'Bank A' -a
 - `encoding` is not supported in config file. It is expected that all files are saved in **UTF8**.
 - output file can contain duplicates
 
+Old version can be found https://github.com/kirillstrelkov/csv2qif/tree/main_py
+
 ## Config file
 
 Config file contains information about how to parse transactions from CSV file and how to format transaction in QIF file. See [test config](tests/public/config.json) for example.
