@@ -1,9 +1,9 @@
 """Functions to work with CSV file."""
+
 import codecs
 import csv
 import json
 import re
-import json
 from collections import namedtuple
 from collections.abc import Iterable
 from pathlib import Path

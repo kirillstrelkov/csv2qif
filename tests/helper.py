@@ -95,6 +95,19 @@ class DataTestCase(TestCase):
         for im in imbalanced:
             logger.error(im)
 
+        descriptions = [
+            t.description[
+                0 : (
+                    t.description.index(t.date[-4:])
+                    if t.date[-4:] in t.description
+                    else -1
+                )
+            ]
+            for t in imbalanced
+        ]
+        logger.debug("Top 10 most common descriptions:")
+        logger.debug(pformat(Counter(descriptions).most_common(10)))
+
         assert len(imbalanced) == expected_nr_imbalanced
         assert len(trans) == expected_nr_qifs
 
