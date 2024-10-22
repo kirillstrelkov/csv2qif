@@ -61,7 +61,7 @@ fn assert_imbalanced_and_counts(
     imbalanced.sort_by_key(|&t| {
         t.date
             .split('.')
-            .map(|s| s.parse::<i32>().unwrap())
+            .map(|s| s.parse::<i32>().unwrap_or(0))
             .rev()
             .collect::<Vec<i32>>()
     });
@@ -73,6 +73,14 @@ fn assert_imbalanced_and_counts(
                 t.date, t.amount, t.description, t.account
             );
         }
+
+        let mut descs = imbalanced
+            .iter()
+            .map(|&t| format!("{},{},{}", t.description.to_lowercase(), t.date, t.amount))
+            .collect::<Vec<String>>();
+        descs.sort();
+        let msg = descs.join("\n");
+        error!("Sorted by descriptions:\n{}", msg);
     }
 
     assert_eq!(imbalanced.len(), expected_nr_imbalanced);

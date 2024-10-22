@@ -35,9 +35,9 @@ Config example for one bank:
   "formats": [
     {
       "name": "Bank A",
-      "delimiter": ";",
+      "delimiter": [";"],
       "description": ["details", "beneficiary_payer"],
-      "date": "date"
+      "date": ["date"]
     }
   ],
   "qif_aliases": {
@@ -55,7 +55,7 @@ Config example for one bank:
 
 ## Help
 
-```
+```bash
 $ csv2qif --help
 Convert CSV file to QIF file.
 

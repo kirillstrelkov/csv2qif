@@ -120,9 +120,9 @@ impl Config {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Format {
     name: String,
-    delimiter: String,
+    delimiter: Vec<String>,
     description: Vec<String>,
-    date: String,
+    date: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -146,10 +146,13 @@ impl Transaction {
         format: &Format,
         data: &HashMap<String, &str>,
     ) -> Option<Transaction> {
-        let date = match data.get(&format.date) {
-            Some(&value) => value.to_string(),
-            None => "".to_string(),
-        };
+        let mut date = "".to_string();
+        for date_key in &format.date {
+            if let Some(&date_value) = data.get(date_key) {
+                date = date_value.to_string();
+                break;
+            }
+        }
         let amount: f64 = match data.get("amount") {
             Some(value) => parse_float(value).unwrap_or(0.0),
             None => 0.0,
@@ -316,24 +319,21 @@ pub fn get_input_files(input: &Input) -> Vec<PathBuf> {
     }
 }
 
-fn get_qif_trans_from_string(
+fn get_qif_trans_from_string_with_delimiter(
     context: &String,
     config: &Config,
+    delimiter: u8,
     format: &Format,
     account_from: &str,
 ) -> Vec<QifTransaction> {
     let mut rdr = ReaderBuilder::new()
-        .delimiter(format.delimiter.as_bytes()[0])
+        .delimiter(delimiter)
         .from_reader(context.as_bytes());
 
     let mut data = vec![];
-    let mut headers = rdr.headers().unwrap().clone();
+    let headers = rdr.headers().unwrap().clone();
     if headers.len() <= 1 {
-        // fallback to tabs
-        rdr = ReaderBuilder::new()
-            .delimiter(b'\t')
-            .from_reader(context.as_bytes());
-        headers = rdr.headers().unwrap().clone();
+        return vec![];
     }
 
     let headers = headers.into_iter().map(get_header_name);
@@ -356,6 +356,28 @@ fn get_qif_trans_from_string(
     }
 
     data.into_iter().map(|t| QifTransaction::from(&t)).collect()
+}
+
+fn get_qif_trans_from_string(
+    context: &String,
+    config: &Config,
+    format: &Format,
+    account_from: &str,
+) -> Vec<QifTransaction> {
+    for delimiter in &format.delimiter {
+        let res = get_qif_trans_from_string_with_delimiter(
+            context,
+            config,
+            delimiter.as_bytes()[0],
+            format,
+            account_from,
+        );
+        if !res.is_empty() {
+            return res;
+        }
+    }
+
+    get_qif_trans_from_string_with_delimiter(context, config, b'\t', format, account_from)
 }
 
 fn get_qif_trans(

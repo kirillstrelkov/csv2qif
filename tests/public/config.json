@@ -1,14 +1,14 @@
 {
     "formats": [{
         "name": "Bank A",
-        "delimiter": ";",
+        "delimiter": [";"],
         "description": ["details", "beneficiary_payer"],
-        "date": "date"
+        "date": ["date"]
     }, {
         "name": "Bank B",
-        "delimiter": ",",
+        "delimiter": [","],
         "description": ["booking_text"],
-        "date": "transaction_date"
+        "date": ["transaction_date"]
     }],
     "qif_aliases": {
         "bank_a": "Assets:Current Assets:Bank A",
