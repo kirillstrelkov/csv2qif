@@ -1,28 +1,27 @@
 {
-    "formats": [{
-        "name": "Bank A",
-        "delimiter": [";"],
-        "description": ["details", "beneficiary_payer"],
-        "date": ["date"]
-    }, {
-        "name": "Bank B",
-        "delimiter": [","],
-        "description": ["booking_text"],
-        "date": ["transaction_date"]
-    }],
-    "qif_aliases": {
-        "bank_a": "Assets:Current Assets:Bank A",
-        "bank_b": "Assets:Current Assets:Bank B"
+  "formats": [
+    {
+      "name": "Bank A",
+      "delimiter": [";"],
+      "description": ["details", "beneficiary_payer"],
+      "date": ["date"]
     },
-    "skip_descriptions": ["Opening balance", "Turnover", "closing balance"],
-    "mappings": {
-        "Expenses:Bank Service Charge": [
-            "Norris and Sons",
-            "Lee"
-        ],
-        "Income:Salary": ["Smith PLC"],
-        "Expenses:Medical": ["medical", "hospital"],
-        "Expenses:Sport": ["sport"]
-
+    {
+      "name": "Bank B",
+      "delimiter": [","],
+      "description": ["booking_text"],
+      "date": ["transaction_date"]
     }
+  ],
+  "qif_aliases": {
+    "bank_a": "Assets:Current Assets:Bank A",
+    "bank_b": "Assets:Current Assets:Bank B"
+  },
+  "skip_descriptions": ["Opening balance", "Turnover", "closing balance"],
+  "mappings": [
+    ["Expenses:Bank Service Charge", ["Norris and Sons", "Lee"]],
+    ["Income:Salary", ["Smith PLC"]],
+    ["Expenses:Medical", ["medical", "hospital"]],
+    ["Expenses:Sport", ["sport"]]
+  ]
 }

@@ -21,12 +21,12 @@ Config file contains information about how to parse transactions from CSV file a
 
 Here is overview of keys in config file:
 
-| key               | comment                                                                                 |
-| ----------------- | --------------------------------------------------------------------------------------- |
-| formats           | config for CSV file from one bank                                                       |
-| qif_aliases       | QIF account name, shortcut which can be used with `-a` flag                             |
-| skip_descriptions | Transactions which contain these text or match regexp will be skipped                   |
-| mappings          | QIF account name and list of texts/regexps that will match transactions to this account |
+| key               | comment                                                                                                                |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| formats           | config for CSV file from one bank                                                                                      |
+| qif_aliases       | QIF account name, shortcut which can be used with `-a` flag                                                            |
+| skip_descriptions | Transactions which contain these text or match regexp will be skipped                                                  |
+| mappings          | QIF account name and list of texts/pattern that will be matched transactions to this account. **NOTE:** order matters. |
 
 Config example for one bank:
 
@@ -38,18 +38,25 @@ Config example for one bank:
       "delimiter": [";"],
       "description": ["details", "beneficiary_payer"],
       "date": ["date"]
+    },
+    {
+      "name": "Bank B",
+      "delimiter": [","],
+      "description": ["booking_text"],
+      "date": ["transaction_date"]
     }
   ],
   "qif_aliases": {
-    "bank_a": "Assets:Current Assets:Bank A"
+    "bank_a": "Assets:Current Assets:Bank A",
+    "bank_b": "Assets:Current Assets:Bank B"
   },
-  "skip_descriptions": ["Opening balance", "closing balance"],
-  "mappings": {
-    "Expenses:Bank Service Charge": ["Bank A"],
-    "Income:Salary": ["Smith PLC"],
-    "Expenses:Medical": ["medical", "hospital"],
-    "Expenses:Sport": ["sport"]
-  }
+  "skip_descriptions": ["Opening balance", "Turnover", "closing balance"],
+  "mappings": [
+    ["Expenses:Bank Service Charge", ["Norris and Sons", "Lee"]],
+    ["Income:Salary", ["Smith PLC"]],
+    ["Expenses:Medical", ["medical", "hospital"]],
+    ["Expenses:Sport", ["sport"]]
+  ]
 }
 ```
 
@@ -75,13 +82,15 @@ Options:
 
 ## Development
 
-### Install libraries
+### Get coverage
+
+#### Install libraries
 
 ```bash
 cargo install cargo-llvm-cov --locked
 ```
 
-### Run coverage
+#### Run coverage
 
 ```bash
 make cov

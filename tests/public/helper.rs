@@ -1,6 +1,6 @@
 use csv2qif::{get_input_files, Input};
 
-use crate::helper::{TestType, _assert_qif_trans, get_data_folder};
+use crate::helper::{assert_qif_trans as _assert_qif_trans, get_data_folder, TestType};
 
 pub fn assert_qif_trans(
     expected_nr_qifs: usize,

@@ -22,11 +22,11 @@ lazy_static! {
 
 #[derive(Debug)]
 pub struct DescPattern {
-    string: String,
+    pub string: String,
     regex: Option<Regex>,
 }
 
-fn match_description(description: &str, pattern: &DescPattern) -> bool {
+pub fn match_description(description: &str, pattern: &DescPattern) -> bool {
     if description.contains(&pattern.string) {
         return true;
     }
@@ -68,18 +68,18 @@ where
     Ok(map_string_to_regexps(&old_vec))
 }
 
-fn deserialize_description_map<'de, D>(
+fn deserialize_description_list<'de, D>(
     deserializer: D,
-) -> CoreResult<HashMap<String, Vec<DescPattern>>, D::Error>
+) -> CoreResult<Vec<(String, Vec<DescPattern>)>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let old_mappings = HashMap::<String, Vec<String>>::deserialize(deserializer).unwrap();
-    let mut new_mappings = HashMap::<String, Vec<DescPattern>>::new();
+    let old_mappings = Vec::<(String, Vec<String>)>::deserialize(deserializer).unwrap();
+    let mut new_mappings = Vec::<(String, Vec<DescPattern>)>::new();
 
     for (key, values) in old_mappings {
         let regex_vec = map_string_to_regexps(&values);
-        new_mappings.insert(key, regex_vec);
+        new_mappings.push((key, regex_vec));
     }
 
     Ok(new_mappings)
@@ -91,8 +91,8 @@ pub struct Config {
     pub qif_aliases: HashMap<String, String>,
     #[serde(deserialize_with = "deserialize_description_vec")]
     pub skip_descriptions: Vec<DescPattern>,
-    #[serde(deserialize_with = "deserialize_description_map")]
-    pub mappings: HashMap<String, Vec<DescPattern>>,
+    #[serde(deserialize_with = "deserialize_description_list")]
+    pub mappings: Vec<(String, Vec<DescPattern>)>,
 }
 
 impl Config {

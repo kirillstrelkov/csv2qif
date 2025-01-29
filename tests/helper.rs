@@ -102,8 +102,20 @@ fn assert_descriptions(trans: &Vec<QifTransaction>) {
         );
     }
 }
+pub fn get_bank_transactions(
+    filename: Option<&str>,
+    format: &str,
+    qif_account_key: &str,
+    test_type: &str,
+) -> Vec<QifTransaction> {
+    let config = get_test_config(test_type);
+    let qif_account_key = config.qif_aliases.get(qif_account_key).unwrap();
+    let files = get_data_files(filename, test_type);
 
-pub fn _assert_qif_trans(
+    get_qif_trans_from_csv(&files, &config, &format, qif_account_key).unwrap()
+}
+
+pub fn assert_qif_trans(
     expected_nr_qifs: usize,
     expected_nr_imbalanced: usize,
     filename: Option<&str>,
@@ -111,12 +123,7 @@ pub fn _assert_qif_trans(
     qif_account_key: &str,
     test_type: &str,
 ) {
-    let config = get_test_config(test_type);
-    let qif_account_key = config.qif_aliases.get(qif_account_key).unwrap();
-
-    let files = get_data_files(filename, test_type);
-
-    let trans = get_qif_trans_from_csv(&files, &config, &format, qif_account_key).unwrap();
+    let trans = get_bank_transactions(filename, format, qif_account_key, test_type);
     assert_imbalanced_and_counts(&trans, expected_nr_imbalanced, expected_nr_qifs);
     assert_descriptions(&trans);
 }

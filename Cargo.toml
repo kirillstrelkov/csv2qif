@@ -1,6 +1,6 @@
 [package]
 name = "csv2qif"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Convert CSV file to QIF file."
 readme = "README.md"
