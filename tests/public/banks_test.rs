@@ -26,10 +26,15 @@ LImbalance-EUR
 
 #[test]
 fn test_bank_a() {
-    assert_qif_trans(12, 6, Some("bank_a_2016.csv"), "Bank A", "bank_a");
+    assert_qif_trans(12, 6, Some("bank_a.csv"), "Bank A", "bank_a");
 }
 
 #[test]
 fn test_bank_b() {
-    assert_qif_trans(12, 9, Some("bank_b_2019.csv"), "Bank B", "bank_a");
+    assert_qif_trans(12, 9, Some("bank_b.csv"), "Bank B", "bank_a");
+}
+
+#[test]
+fn test_bank_c() {
+    assert_qif_trans(10, 0, Some("bank_c.csv"), "Bank C", "bank_c");
 }

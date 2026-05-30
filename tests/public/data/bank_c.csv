@@ -1,0 +1,11 @@
+Buchung;Wertstellungsdatum;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung
+01.06.2026;01.06.2026;ACME Corporation;Gutschrift;Gehalt 05/2026;3.911,82;EUR;2500,00;EUR
+02.06.2026;02.06.2026;REWE Filiale 1234;Lastschrift;EC-Karte 01.06.;3.864,32;EUR;-47,50;EUR
+02.06.2026;02.06.2026;Immobilien GmbH;Dauerauftrag;Miete Juni 2026;3.014,32;EUR;-850,00;EUR
+03.06.2026;03.06.2026;Netflix International;Lastschrift;Abo-Gebuehr;2.994,33;EUR;-19,99;EUR
+04.06.2026;04.06.2026;Amazon EU S.a.r.l.;Lastschrift;Bestellnr. 302-49102;2.954,43;EUR;-39,90;EUR
+05.06.2026;05.06.2026;PayPal Europe;Lastschrift;Ihr Einkauf bei eBay;2.929,43;EUR;-25,00;EUR
+08.06.2026;05.06.2026;Shell Tankstelle;Lastschrift;EC-Karte 05.06.;2.859,43;EUR;-70,00;EUR
+08.06.2026;08.06.2026;Deutsche Telekom;Lastschrift;Rechnung 19284019;2.809,48;EUR;-49,95;EUR
+09.06.2026;09.06.2026;Max Mustermann;Ueberweisung;Auslagen Restaurant;2.844,48;EUR;35,00;EUR
+10.06.2026;10.06.2026;Vattenfall GmbH;Dauerauftrag;Abschlag Strom;2.779,48;EUR;-65,00;EUR

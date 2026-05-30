@@ -23,5 +23,5 @@ pub fn assert_qif_trans(
 fn test_get_public_input_files() {
     let data_folder = get_data_folder(TestType::PUBLIC);
     let files = get_input_files(&Input::Path(data_folder));
-    assert_eq!(files.len(), 2)
+    assert_eq!(files.len(), 3)
 }

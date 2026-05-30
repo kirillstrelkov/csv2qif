@@ -2,26 +2,140 @@
   "formats": [
     {
       "name": "Bank A",
-      "delimiter": [";"],
-      "description": ["details", "beneficiary_payer"],
-      "date": ["date"]
+      "delimiter": [
+        ";"
+      ],
+      "description": [
+        "details",
+        "beneficiary_payer"
+      ],
+      "date": [
+        "date"
+      ]
     },
     {
       "name": "Bank B",
-      "delimiter": [","],
-      "description": ["booking_text"],
-      "date": ["transaction_date"]
+      "delimiter": [
+        ","
+      ],
+      "description": [
+        "booking_text"
+      ],
+      "date": [
+        "transaction_date"
+      ]
+    },
+    {
+      "name": "Bank C",
+      "delimiter": [
+        ";"
+      ],
+      "description": [
+        "auftraggeber_empfänger",
+        "buchungstext",
+        "verwendungszweck"
+      ],
+      "date": [
+        "wertstellungsdatum"
+      ],
+      "amount": "betrag"
     }
   ],
   "qif_aliases": {
     "bank_a": "Assets:Current Assets:Bank A",
-    "bank_b": "Assets:Current Assets:Bank B"
+    "bank_b": "Assets:Current Assets:Bank B",
+    "bank_c": "Assets:Current Assets:Bank C"
   },
-  "skip_descriptions": ["Opening balance", "Turnover", "closing balance"],
+  "skip_descriptions": [
+    "Opening balance",
+    "Turnover",
+    "closing balance"
+  ],
   "mappings": [
-    ["Expenses:Bank Service Charge", ["Norris and Sons", "Lee"]],
-    ["Income:Salary", ["Smith PLC"]],
-    ["Expenses:Medical", ["medical", "hospital"]],
-    ["Expenses:Sport", ["sport"]]
+    [
+      "Income:Salary",
+      [
+        "Smith PLC",
+        "Gehalt"
+      ]
+    ],
+    [
+      "Expenses:Groceries",
+      [
+        "REWE",
+        "Supermarkt"
+      ]
+    ],
+    [
+      "Expenses:Housing:Rent",
+      [
+        "Immobilien GmbH",
+        "Miete"
+      ]
+    ],
+    [
+      "Expenses:Entertainment:Subscription",
+      [
+        "Netflix",
+        "Abo-Gebuehr"
+      ]
+    ],
+    [
+      "Expenses:Shopping",
+      [
+        "Amazon"
+      ]
+    ],
+    [
+      "Expenses:Digital Services",
+      [
+        "PayPal"
+      ]
+    ],
+    [
+      "Expenses:Transport:Fuel",
+      [
+        "Shell Tankstelle"
+      ]
+    ],
+    [
+      "Expenses:Utilities:Phone",
+      [
+        "Deutsche Telekom"
+      ]
+    ],
+    [
+      "Expenses:Utilities:Electricity",
+      [
+        "Vattenfall",
+        "Strom"
+      ]
+    ],
+    [
+      "Expenses:Leisure:Dining",
+      [
+        "Restaurant"
+      ]
+    ],
+    [
+      "Expenses:Bank Service Charge",
+      [
+        "Norris and Sons",
+        "Lee"
+      ]
+    ],
+    [
+      "Expenses:Medical",
+      [
+        "medical",
+        "hospital"
+      ]
+    ],
+    [
+      "Expenses:Sport",
+      [
+        "sport"
+      ]
+    ]
   ]
 }

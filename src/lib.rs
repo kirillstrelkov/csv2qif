@@ -2,6 +2,7 @@ use core::result::Result as CoreResult;
 use csv::ReaderBuilder;
 use glob::glob;
 use lazy_static::lazy_static;
+use log::info;
 use log::warn;
 use rayon::prelude::*;
 use regex::Regex;
@@ -120,6 +121,13 @@ pub struct Format {
     delimiter: Vec<String>,
     description: Vec<String>,
     date: Vec<String>,
+
+    #[serde(default = "default_format_amount")]
+    amount: String,
+}
+
+fn default_format_amount() -> String {
+    String::from("amount")
 }
 
 #[derive(Debug)]
@@ -138,6 +146,12 @@ pub struct Transaction {
 }
 
 impl Transaction {
+    pub fn is_valid(&self) -> bool {
+        !self.date.is_empty()
+            && !self.description.is_empty()
+            && (self.increase != 0.0 || self.decrease != 0.0)
+    }
+
     pub fn from(
         config: &Config,
         format: &Format,
@@ -150,7 +164,7 @@ impl Transaction {
                 break;
             }
         }
-        let amount: f64 = match data.get("amount") {
+        let amount: f64 = match data.get(&format.amount) {
             Some(value) => parse_float(value).unwrap_or(0.0),
             None => 0.0,
         };
@@ -189,13 +203,19 @@ impl Transaction {
             }
         }
 
-        Some(Transaction {
+        let tran = Transaction {
             date,
             description,
             account,
             increase,
             decrease,
-        })
+        };
+        if !tran.is_valid() {
+            warn!("Failed to process {data:?} -> {tran:?}");
+            return None;
+        }
+
+        Some(tran)
     }
 }
 
@@ -413,6 +433,9 @@ N{qif_account_key}
 pub fn csv2qif(input: &Input, config: &Config, format: &str, account_key: &str) -> Result<String> {
     let qif_account_key = &config.qif_aliases[account_key];
     let format = config.get_format(format)?;
+
+    info!("Using '{qif_account_key}' and {format:?} to process {input:?}");
+
     let qif_trans = get_qif_trans(input, config, format, qif_account_key)?;
 
     Ok(qif_trans_to_string(&qif_trans, qif_account_key))
