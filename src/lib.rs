@@ -48,10 +48,7 @@ fn map_string_to_regexps(strings: &[String]) -> Vec<DescPattern> {
         .iter()
         .map(|s| {
             let pattern: String = format!("(?i){s}");
-            let re = match Regex::new(&pattern) {
-                Ok(re) => Some(re),
-                Err(_) => None,
-            };
+            let re = Regex::new(&pattern).ok();
             DescPattern {
                 string: s.to_string(),
                 regex: re,
@@ -284,10 +281,7 @@ fn parse_float(text: &str) -> Option<f64> {
     }
     text = RE_COMMA_DOT.replace(&text, ".").to_string();
 
-    match text.parse() {
-        Ok(value) => Some(value),
-        Err(_) => None,
-    }
+    text.parse().ok()
 }
 
 fn get_header_name(header: &str) -> String {
