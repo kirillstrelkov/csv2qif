@@ -38,7 +38,9 @@
       "date": [
         "wertstellungsdatum"
       ],
-      "amount": "betrag"
+      "amount": [
+        "betrag"
+      ]
     }
   ],
   "qif_aliases": {

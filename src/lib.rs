@@ -1,17 +1,16 @@
-use core::result::Result as CoreResult;
+use anyhow::{bail, Context, Result};
 use csv::ReaderBuilder;
 use glob::glob;
 use lazy_static::lazy_static;
-use log::info;
-use log::warn;
+use log::{debug, info, trace, warn};
 use rayon::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize};
+use std::collections::HashMap;
+use std::fmt;
+use std::fs::{self, File};
 use std::io::Read;
-use std::io::Result;
-use std::path::Path;
-use std::{collections::HashMap, fs::File, path::PathBuf};
-use std::{fmt, fs};
+use std::path::{Path, PathBuf};
 
 lazy_static! {
     static ref RE_WRONG_DESC: Regex = Regex::new(r"[;,\s]+").unwrap();
@@ -48,7 +47,7 @@ fn map_string_to_regexps(strings: &[String]) -> Vec<DescPattern> {
     strings
         .iter()
         .map(|s| {
-            let pattern: String = format!("(?i){s}");
+            let pattern = format!("(?i){s}");
             let re = Regex::new(&pattern).ok();
             DescPattern {
                 string: s.to_string(),
@@ -58,27 +57,25 @@ fn map_string_to_regexps(strings: &[String]) -> Vec<DescPattern> {
         .collect()
 }
 
-fn deserialize_description_vec<'de, D>(deserializer: D) -> CoreResult<Vec<DescPattern>, D::Error>
+fn deserialize_description_vec<'de, D>(deserializer: D) -> Result<Vec<DescPattern>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let old_vec = Vec::<String>::deserialize(deserializer).unwrap();
+    let old_vec = Vec::<String>::deserialize(deserializer)?;
     Ok(map_string_to_regexps(&old_vec))
 }
 
 fn deserialize_description_list<'de, D>(
     deserializer: D,
-) -> CoreResult<Vec<(String, Vec<DescPattern>)>, D::Error>
+) -> Result<Vec<(String, Vec<DescPattern>)>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let old_mappings = Vec::<(String, Vec<String>)>::deserialize(deserializer).unwrap();
-    let mut new_mappings = Vec::<(String, Vec<DescPattern>)>::new();
-
-    for (key, values) in old_mappings {
-        let regex_vec = map_string_to_regexps(&values);
-        new_mappings.push((key, regex_vec));
-    }
+    let old_mappings = Vec::<(String, Vec<String>)>::deserialize(deserializer)?;
+    let new_mappings = old_mappings
+        .into_iter()
+        .map(|(key, values)| (key, map_string_to_regexps(&values)))
+        .collect();
 
     Ok(new_mappings)
 }
@@ -94,24 +91,31 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn get_account(&self, description: &str) -> String {
+    pub fn get_account(&self, description: &str) -> &str {
         for (account, descs) in &self.mappings {
             for desc in descs {
                 if match_description(description, desc) {
-                    return account.to_string();
+                    trace!(
+                        "Mapped description '{}' to account '{}'",
+                        description,
+                        account
+                    );
+                    return account;
                 }
             }
         }
-
-        "Imbalance-EUR".to_string()
+        warn!(
+            "No mapping found for description '{}', falling back to 'Imbalance-EUR'",
+            description
+        );
+        "Imbalance-EUR"
     }
 
     pub fn get_format(&self, name: &str) -> Result<&Format> {
-        if let Some(found_format) = self.formats.iter().find(|&f| f.name == name) {
-            Ok(found_format)
-        } else {
-            panic!("Failed for find format for {name}");
-        }
+        self.formats
+            .iter()
+            .find(|f| f.name == name)
+            .with_context(|| format!("Failed to find format config for '{name}'"))
     }
 }
 
@@ -121,13 +125,12 @@ pub struct Format {
     delimiter: Vec<String>,
     description: Vec<String>,
     date: Vec<String>,
-
     #[serde(default = "default_format_amount")]
-    amount: String,
+    amount: Vec<String>,
 }
 
-fn default_format_amount() -> String {
-    String::from("amount")
+fn default_format_amount() -> Vec<String> {
+    vec![String::from("amount")]
 }
 
 #[derive(Debug)]
@@ -155,19 +158,24 @@ impl Transaction {
     pub fn from(
         config: &Config,
         format: &Format,
-        data: &HashMap<String, &str>,
+        data: &HashMap<&str, &str>, // Changed to completely zero-allocation keys
     ) -> Option<Transaction> {
-        let mut date = "".to_string();
+        let mut date = String::new();
         for date_key in &format.date {
-            if let Some(&date_value) = data.get(date_key) {
+            if let Some(&date_value) = data.get(date_key.as_str()) {
                 date = date_value.to_string();
                 break;
             }
         }
-        let amount: f64 = match data.get(&format.amount) {
-            Some(value) => parse_float(value).unwrap_or(0.0),
-            None => 0.0,
-        };
+
+        let mut amount: f64 = 0.0;
+        for amount_key in &format.amount {
+            if let Some(&value) = data.get(amount_key.as_str()) {
+                amount = parse_float(value).unwrap_or(0.0);
+                break;
+            }
+        }
+
         let mut increase = 0.0;
         let mut decrease = 0.0;
 
@@ -191,14 +199,20 @@ impl Transaction {
         let descs: Vec<&str> = format
             .description
             .iter()
-            .filter_map(|desc| data.get(desc))
+            .filter_map(|desc| data.get(desc.as_str()))
             .copied()
             .collect();
+
         let description = fix_description(descs);
-        let account = config.get_account(&description);
+        let account = config.get_account(&description).to_string();
 
         for skip_desc in &config.skip_descriptions {
             if match_description(&description, skip_desc) {
+                trace!(
+                    "Skipping transaction matching pattern '{}': '{}'",
+                    skip_desc.string,
+                    description
+                );
                 return None;
             }
         }
@@ -210,8 +224,9 @@ impl Transaction {
             increase,
             decrease,
         };
+
         if !tran.is_valid() {
-            warn!("Failed to process {data:?} -> {tran:?}");
+            warn!("Failed to process: transaction is invalid (empty date/description or zero amount). data: {data:?} -> processed transaction: {tran:?}");
             return None;
         }
 
@@ -229,19 +244,11 @@ pub struct QifTransaction {
 
 impl fmt::Display for QifTransaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let date: &String = &self.date;
-        let amount = self.amount;
-        let description = &self.description;
-        let account = &self.account;
-        let string = format!(
-            r#"!Type:Bank
-D{date}
-T{amount}
-P{description}
-L{account}
-^"#
-        );
-        write!(f, "{}", string)
+        write!(
+            f,
+            "!Type:Bank\nD{}\nT{}\nP{}\nL{}\n^",
+            self.date, self.amount, self.description, self.account
+        )
     }
 }
 
@@ -255,22 +262,20 @@ impl QifTransaction {
                 -transaction.decrease
             },
             description: transaction.description.to_owned(),
-            account: transaction.account.to_string(),
+            account: transaction.account.clone(),
         }
     }
 }
 
 pub fn get_config(path: &Path) -> Result<Config> {
     let mut file = File::open(path)?;
-
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-
     Ok(serde_json::from_str(&contents)?)
 }
 
 pub fn get_qif_trans_from_csv(
-    files: &Vec<PathBuf>,
+    files: &[PathBuf],
     config: &Config,
     format: &str,
     account_from: &str,
@@ -282,8 +287,8 @@ pub fn get_qif_trans_from_csv(
             let input = Input::Path(file.to_owned());
             match get_qif_trans(&input, config, format, account_from) {
                 Ok(trans) => trans,
-                Err(_err) => {
-                    warn!("Failed to parse file {:?}", file);
+                Err(err) => {
+                    warn!("Failed to parse file {}: {:?}", file.display(), err);
                     vec![]
                 }
             }
@@ -293,7 +298,6 @@ pub fn get_qif_trans_from_csv(
 }
 
 fn parse_float(text: &str) -> Option<f64> {
-    // leave only numbers, comma and dot
     let mut text = RE_NUMBER.replace_all(text, "").to_string();
 
     if RE_COMMA_DOT.find_iter(&text).count() == 2 {
@@ -310,10 +314,14 @@ fn get_header_name(header: &str) -> String {
 }
 
 pub fn get_files(path: &Path) -> Vec<PathBuf> {
-    let path = path.to_str().unwrap();
-    let pattern = format!("{path}/**/*.csv");
-    match glob(&pattern) {
-        Ok(paths) => paths.into_iter().filter_map(|r| r.ok()).collect(),
+    let pattern = path.join("**").join("*.csv");
+    let pattern_str = match pattern.to_str() {
+        Some(s) => s,
+        None => return vec![],
+    };
+
+    match glob(pattern_str) {
+        Ok(paths) => paths.filter_map(Result::ok).collect(),
         Err(_) => vec![],
     }
 }
@@ -322,19 +330,17 @@ pub fn get_input_files(input: &Input) -> Vec<PathBuf> {
     match input {
         Input::Path(path) => {
             if path.is_dir() {
-                get_files(path).into_iter().collect()
+                get_files(path)
             } else {
                 vec![path.to_owned()]
             }
         }
-        _ => {
-            vec![]
-        }
+        _ => vec![],
     }
 }
 
 fn get_qif_trans_from_string_with_delimiter(
-    context: &String,
+    context: &str,
     config: &Config,
     delimiter: u8,
     format: &Format,
@@ -345,25 +351,41 @@ fn get_qif_trans_from_string_with_delimiter(
         .from_reader(context.as_bytes());
 
     let mut data = vec![];
-    let headers = rdr.headers().unwrap().clone();
-    if headers.len() <= 1 {
+
+    let raw_headers = match rdr.headers() {
+        Ok(h) => h.clone(),
+        Err(err) => {
+            trace!(
+                "Failed to read CSV headers for delimiter (byte {}): {:?}",
+                delimiter,
+                err
+            );
+            return vec![];
+        }
+    };
+
+    if raw_headers.len() <= 1 {
+        trace!(
+            "CSV has too few columns (headers count: {}) for delimiter (byte {})",
+            raw_headers.len(),
+            delimiter
+        );
         return vec![];
     }
 
-    let headers = headers.into_iter().map(get_header_name);
-    for record in rdr.records() {
-        let x = match record {
-            Ok(value) => value,
-            Err(err) => panic!("Failed to parse: {err}"),
-        };
-        // TODO: improve by removing cloning
+    // Process converted header names once here out-of-the-loop!
+    let headers: Vec<String> = raw_headers.iter().map(get_header_name).collect();
+
+    for record in rdr.records().flatten() {
         let row = headers
-            .clone()
-            .zip(x.iter())
-            .collect::<HashMap<String, &str>>();
+            .iter()
+            .map(String::as_str)
+            .zip(record.iter())
+            .collect::<HashMap<&str, &str>>();
+
         if let Some(transaction) = Transaction::from(config, format, &row) {
             if account_from == transaction.account {
-                warn!("SKIP: Found transaction with same account: {transaction:?}");
+                warn!("Transaction has the same source and destination account (self-transfer): {transaction:?}");
             }
             data.push(transaction);
         }
@@ -373,25 +395,58 @@ fn get_qif_trans_from_string_with_delimiter(
 }
 
 fn get_qif_trans_from_string(
-    context: &String,
+    context: &str,
     config: &Config,
     format: &Format,
     account_from: &str,
-) -> Vec<QifTransaction> {
+) -> Result<Vec<QifTransaction>> {
+    if format.delimiter.is_empty() {
+        bail!("Format '{}' has no delimiters configured.", format.name);
+    }
+
     for delimiter in &format.delimiter {
-        let res = get_qif_trans_from_string_with_delimiter(
-            context,
-            config,
-            delimiter.as_bytes()[0],
-            format,
-            account_from,
-        );
-        if !res.is_empty() {
-            return res;
+        if let Some(delim_byte) = delimiter.as_bytes().first() {
+            trace!(
+                "Trying delimiter '{}' for format '{}'",
+                delimiter,
+                format.name
+            );
+            let res = get_qif_trans_from_string_with_delimiter(
+                context,
+                config,
+                *delim_byte,
+                format,
+                account_from,
+            );
+
+            if !res.is_empty() {
+                trace!(
+                    "Successfully parsed {} transactions using delimiter '{}' for format '{}'",
+                    res.len(),
+                    delimiter,
+                    format.name
+                );
+                return Ok(res);
+            } else {
+                trace!(
+                    "Delimiter '{}' for format '{}' yielded 0 transactions",
+                    delimiter,
+                    format.name
+                );
+            }
+        } else {
+            bail!(
+                "Format '{}' contains an empty string as a delimiter.",
+                format.name
+            );
         }
     }
 
-    get_qif_trans_from_string_with_delimiter(context, config, b'\t', format, account_from)
+    bail!(
+        "Failed to parse any transactions using the configured delimiters {:?} for format '{}'.",
+        format.delimiter,
+        format.name
+    );
 }
 
 fn get_qif_trans(
@@ -400,20 +455,27 @@ fn get_qif_trans(
     format: &Format,
     account_from: &str,
 ) -> Result<Vec<QifTransaction>> {
-    Ok(match input {
+    match input {
         Input::String(content) => get_qif_trans_from_string(content, config, format, account_from),
         Input::Path(path) => get_input_files(&Input::Path(path.to_owned()))
             .into_iter()
-            .flat_map(|p| {
-                get_qif_trans_from_string(
-                    &fs::read_to_string(p).unwrap(),
-                    config,
-                    format,
-                    account_from,
-                )
+            .map(|p| {
+                trace!("Reading {}", p.display());
+                let content = fs::read_to_string(&p).with_context(|| {
+                    format!("file or folder \"{}\" does not exist", p.display())
+                })?;
+
+                let trans = get_qif_trans_from_string(&content, config, format, account_from)?;
+                debug!(
+                    "Parsed {} transactions from file '{}'",
+                    trans.len(),
+                    p.display()
+                );
+                Ok(trans)
             })
-            .collect(),
-    })
+            .collect::<Result<Vec<Vec<QifTransaction>>>>()
+            .map(|nested| nested.into_iter().flatten().collect()),
+    }
 }
 
 fn qif_trans_to_string(trans: &[QifTransaction], qif_account_key: &str) -> String {
@@ -422,16 +484,14 @@ fn qif_trans_to_string(trans: &[QifTransaction], qif_account_key: &str) -> Strin
         .map(|t| t.to_string())
         .collect::<Vec<String>>()
         .join("\n");
-    format!(
-        r#"!Account
-N{qif_account_key}
-^
-{trans}"#
-    )
+    format!("!Account\nN{qif_account_key}\n^\n{trans}")
 }
 
 pub fn csv2qif(input: &Input, config: &Config, format: &str, account_key: &str) -> Result<String> {
-    let qif_account_key = &config.qif_aliases[account_key];
+    let qif_account_key = match config.qif_aliases.get(account_key) {
+        Some(k) => k,
+        None => bail!("Missing QIF alias mapping for account key: '{account_key}'"),
+    };
     let format = config.get_format(format)?;
 
     info!("Using '{qif_account_key}' and {format:?} to process {input:?}");

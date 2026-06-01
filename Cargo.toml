@@ -15,10 +15,8 @@ clap = { version = "4.5.18", features = ["derive"] }
 log = "0.4.22"
 rayon = "1.10.0"
 lazy_static = "1.5.0"
-simplelog = "0.12.2"
 anyhow = "1.0.102"
-fern = { version = "0.7.1", features = ["colored"] }
-chrono = "0.4.44"
+env_logger = "0.11.10"
 
 [dev-dependencies]
 test-log = "*"

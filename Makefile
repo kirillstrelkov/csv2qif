@@ -24,3 +24,6 @@ run:
 
 fix:
 	cargo fix --allow-dirty
+
+release:
+	cargo build --release
