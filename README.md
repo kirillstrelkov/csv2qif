@@ -28,7 +28,19 @@ Here is overview of keys in config file:
 | skip_descriptions | Transactions which contain these text or match regexp will be skipped                                                  |
 | mappings          | QIF account name and list of texts/pattern that will be matched transactions to this account. **NOTE:** order matters. |
 
-Config example for one bank:
+Each format object under `formats` supports the following keys:
+
+| format key  | type            | comment                                                                                         |
+| ----------- | --------------- | ----------------------------------------------------------------------------------------------- |
+| name        | string          | Name/identifier of the format (referenced with `-f` option)                                     |
+| delimiter   | array of string | List of delimiters to try (e.g. `[";"]` or `[","]`)                                             |
+| description | array of string | List of CSV header names to build the description from                                          |
+| date        | array of string | List of CSV header names to extract the transaction date from                                   |
+| amount      | array of string | List of CSV header names to extract the amount from (defaults to `["amount"]` if not specified) |
+
+_Note:_ All header names in `description`, `date`, and `amount` are automatically normalized into lowercase snake_case (e.g., `"Auftraggeber/Empfänger"` is matched as `"auftraggeber_empfänger"`).
+
+Config example:
 
 ```json
 {
@@ -44,11 +56,23 @@ Config example for one bank:
       "delimiter": [","],
       "description": ["booking_text"],
       "date": ["transaction_date"]
+    },
+    {
+      "name": "Bank C",
+      "delimiter": [";"],
+      "description": [
+        "Auftraggeber/Empfänger",
+        "Buchungstext",
+        "Verwendungszweck"
+      ],
+      "date": ["Wertstellungsdatum"],
+      "amount": ["Betrag"]
     }
   ],
   "qif_aliases": {
     "bank_a": "Assets:Current Assets:Bank A",
-    "bank_b": "Assets:Current Assets:Bank B"
+    "bank_b": "Assets:Current Assets:Bank B",
+    "bank_c": "Assets:Current Assets:Bank C"
   },
   "skip_descriptions": ["Opening balance", "Turnover", "closing balance"],
   "mappings": [
@@ -66,18 +90,19 @@ Config example for one bank:
 $ csv2qif --help
 Convert CSV file to QIF file.
 
-Usage: csv2qif --format <FORMAT> --account <ACCOUNT> --config <CONFIG> <INPUT> <OUTPUT>
+Usage: csv2qif [OPTIONS] --format <FORMAT> --account <ACCOUNT> --config <CONFIG> <INPUT> <OUTPUT>
 
 Arguments:
   <INPUT>   Path to input CSV file
   <OUTPUT>  Path to output QIF file
 
 Options:
-  -f, --format <FORMAT>    Format to be used from config file
-  -a, --account <ACCOUNT>  Key in qif_aliases which is used as account name in QIF file
-  -c, --config <CONFIG>    Path to config file
-  -h, --help               Print help
-  -V, --version            Print version
+  -f, --format <FORMAT>        Format to be used from config file
+  -a, --account <ACCOUNT>      Key in qif_aliases which is used as account name in QIF file
+  -c, --config <CONFIG>        Path to config file
+  -l, --log-level <LOG_LEVEL>  Log level [default: info] [possible values: error, warn, info, debug, trace]
+  -h, --help                   Print help
+  -V, --version                Print version
 ```
 
 ## Development
