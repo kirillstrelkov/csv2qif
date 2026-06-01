@@ -162,7 +162,8 @@ impl Transaction {
     ) -> Option<Transaction> {
         let mut date = String::new();
         for date_key in &format.date {
-            if let Some(&date_value) = data.get(date_key.as_str()) {
+            let key = get_header_name(date_key);
+            if let Some(&date_value) = data.get(key.as_str()) {
                 date = date_value.to_string();
                 break;
             }
@@ -170,7 +171,8 @@ impl Transaction {
 
         let mut amount: f64 = 0.0;
         for amount_key in &format.amount {
-            if let Some(&value) = data.get(amount_key.as_str()) {
+            let key = get_header_name(amount_key);
+            if let Some(&value) = data.get(key.as_str()) {
                 amount = parse_float(value).unwrap_or(0.0);
                 break;
             }
@@ -199,8 +201,10 @@ impl Transaction {
         let descs: Vec<&str> = format
             .description
             .iter()
-            .filter_map(|desc| data.get(desc.as_str()))
-            .copied()
+            .filter_map(|desc| {
+                let key = get_header_name(desc);
+                data.get(key.as_str()).copied()
+            })
             .collect();
 
         let description = fix_description(descs);

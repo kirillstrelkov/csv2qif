@@ -38,3 +38,14 @@ fn test_bank_b() {
 fn test_bank_c() {
     assert_qif_trans(10, 0, Some("bank_c.csv"), "Bank C", "bank_c");
 }
+
+#[test]
+fn test_bank_c_orig_headers() {
+    assert_qif_trans(
+        10,
+        0,
+        Some("bank_c.csv"),
+        "Bank C - original headers",
+        "bank_c",
+    );
+}

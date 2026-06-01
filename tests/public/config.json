@@ -41,6 +41,23 @@
       "amount": [
         "betrag"
       ]
+    },
+    {
+      "name": "Bank C - original headers",
+      "delimiter": [
+        ";"
+      ],
+      "description": [
+        "Auftraggeber/Empfänger",
+        "Buchungstext",
+        "Verwendungszweck"
+      ],
+      "date": [
+        "Wertstellungsdatum"
+      ],
+      "amount": [
+        "Betrag"
+      ]
     }
   ],
   "qif_aliases": {
