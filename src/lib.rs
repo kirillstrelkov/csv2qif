@@ -119,13 +119,26 @@ impl Config {
     }
 }
 
+fn deserialize_header_vec<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let vec = Vec::<String>::deserialize(deserializer)?;
+    Ok(vec.into_iter().map(|s| get_header_name(&s)).collect())
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Format {
     name: String,
     delimiter: Vec<String>,
+    #[serde(deserialize_with = "deserialize_header_vec")]
     description: Vec<String>,
+    #[serde(deserialize_with = "deserialize_header_vec")]
     date: Vec<String>,
-    #[serde(default = "default_format_amount")]
+    #[serde(
+        default = "default_format_amount",
+        deserialize_with = "deserialize_header_vec"
+    )]
     amount: Vec<String>,
 }
 
@@ -158,12 +171,11 @@ impl Transaction {
     pub fn from(
         config: &Config,
         format: &Format,
-        data: &HashMap<&str, &str>, // Changed to completely zero-allocation keys
+        data: &HashMap<&str, &str>,
     ) -> Option<Transaction> {
         let mut date = String::new();
         for date_key in &format.date {
-            let key = get_header_name(date_key);
-            if let Some(&date_value) = data.get(key.as_str()) {
+            if let Some(&date_value) = data.get(date_key.as_str()) {
                 date = date_value.to_string();
                 break;
             }
@@ -171,8 +183,7 @@ impl Transaction {
 
         let mut amount: f64 = 0.0;
         for amount_key in &format.amount {
-            let key = get_header_name(amount_key);
-            if let Some(&value) = data.get(key.as_str()) {
+            if let Some(&value) = data.get(amount_key.as_str()) {
                 amount = parse_float(value).unwrap_or(0.0);
                 break;
             }
@@ -201,10 +212,8 @@ impl Transaction {
         let descs: Vec<&str> = format
             .description
             .iter()
-            .filter_map(|desc| {
-                let key = get_header_name(desc);
-                data.get(key.as_str()).copied()
-            })
+            .filter_map(|desc| data.get(desc.as_str()))
+            .copied()
             .collect();
 
         let description = fix_description(descs);
@@ -377,7 +386,6 @@ fn get_qif_trans_from_string_with_delimiter(
         return vec![];
     }
 
-    // Process converted header names once here out-of-the-loop!
     let headers: Vec<String> = raw_headers.iter().map(get_header_name).collect();
 
     for record in rdr.records().flatten() {
